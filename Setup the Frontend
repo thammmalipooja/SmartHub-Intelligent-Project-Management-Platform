@@ -1,0 +1,64 @@
+// App.js
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+function App() {
+  const [tasks, setTasks] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [newTask, setNewTask] = useState({ title: '', description: '', assignee: '', priority: '' });
+
+  useEffect(() => {
+    axios.get('/api/tasks')
+      .then(res => setTasks(res.data))
+      .catch(err => console.error('Error fetching tasks:', err));
+    axios.get('/api/users')
+      .then(res => setUsers(res.data))
+      .catch(err => console.error('Error fetching users:', err));
+  }, []);
+
+  const handleChange = (e) => {
+    setNewTask({ ...newTask, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post('/api/tasks', newTask);
+      setTasks([...tasks, res.data]);
+      setNewTask({ title: '', description: '', assignee: '', priority: '' });
+    } catch (err) {
+      console.error('Error creating task:', err);
+    }
+  };
+
+  return (
+    <div>
+      <h1>SmartHub: Project Management Platform</h1>
+      <form onSubmit={handleSubmit}>
+        <input type="text" placeholder="Title" name="title" value={newTask.title} onChange={handleChange} required />
+        <input type="text" placeholder="Description" name="description" value={newTask.description} onChange={handleChange} required />
+        <select name="assignee" value={newTask.assignee} onChange={handleChange} required>
+          <option value="">Select Assignee</option>
+          {users.map(user => (
+            <option key={user._id} value={user._id}>{user.name}</option>
+          ))}
+        </select>
+        <input type="text" placeholder="Priority" name="priority" value={newTask.priority} onChange={handleChange} required />
+        <button type="submit">Add Task</button>
+      </form>
+      <ul>
+        {tasks.map(task => (
+          <li key={task._id}>
+            <h3>{task.title}</h3>
+            <p>{task.description}</p>
+            <p>Assignee: {task.assignee}</p>
+            <p>Priority: {task.priority}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
